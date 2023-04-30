@@ -11,7 +11,7 @@
                     <form method="POST">
                         {% csrf_token %}
                         {{ form|crispy }}
-                        <input class="btn btn-info btn-block" type="submit" value="Make Request">
+                        <input class="btn btn-info btn-block" type="submit" value="Make Request" onclick="alert('Request sent successfully')">
                     </form>
                 </div>
             </div>
