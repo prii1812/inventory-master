@@ -287,7 +287,7 @@ def item_review(request,pk):
           item.status='Pending'
           item.is_accepted=False
           item.save()
-          return HttpResponseBadRequest("Product is out of stock")
+          return HttpResponseBadRequest("error:Product is out of stock!! Please order "+ products.name )
          else:
              if status=='Rejected' and item.status=='Accepted':
               products.quantity+=item.issueditem_quantity
