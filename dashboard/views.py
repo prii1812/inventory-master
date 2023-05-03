@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
 from reportlab.pdfgen import canvas
-
+from django.http import HttpResponseBadRequest
 
 from django.http import HttpResponse
 from openpyxl import Workbook
@@ -268,6 +268,7 @@ def generate_excel_file(request):
 def item_review(request,pk):
     items=Issued_Items.objects.all()
     item=Issued_Items.objects.get(id=pk)
+    products=item.product
     items_count = items.count()
     workers_count =User.objects.all().count()
     product_count =Product.objects.all().count()
@@ -280,14 +281,46 @@ def item_review(request,pk):
             send_mail(name,message,'settings.EMAIL_HOST_USER',[toemail],fail_silently=False)
             return redirect('dashboardindex')
         status=request.POST.get('status')
-        item.status=status
-        
-        if status=='Accepted':
-            item.is_accepted=True
-            
+        if products.quantity <= 0:
+         
+         if status=='Accepted':
+          item.status='Pending'
+          item.is_accepted=False
+          item.save()
+          return HttpResponseBadRequest("Product is out of stock")
+         else:
+             if status=='Rejected' and item.status=='Accepted':
+              products.quantity+=item.issueditem_quantity
+              products.save()
+             item.status='Rejected'
+             item.is_accepted=False
+             item.save()
         else:
+         if status=='Accepted'and item.status=='Pending':
+               products.quantity -= item.issueditem_quantity
+               products.save()
+               item.is_accepted=True
+               item.status=status
+               item.save()
+               
+         elif status=='Rejected' and item.status=='Accepted':
+            products.quantity+=item.issueditem_quantity
+            products.save()
+            item.status=status
             item.is_accepted=False
-        item.save()
+            item.save()
+         elif status=='Accepted'and item.status=='Rejected':
+               products.quantity -= item.issueditem_quantity
+               products.save()
+               item.is_accepted=True
+               item.status=status
+               item.save()
+               
+         else:
+             item.status=status
+             item.save()
+
+              
         if status == 'Accepted':   
          return redirect('dashboardissueditems')
         else:
